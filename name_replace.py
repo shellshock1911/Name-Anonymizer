@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """This script helps to automate anonymizing texts by replacing person
@@ -12,10 +12,7 @@ each contain one passage / text that has person names that need replacing.
 Capitalized, lower case, and possessive forms of names are all found and replaced,
 provided they exist in English names file. Using the debug flag, empty input and 
 failed conversions are able to be tracked and reported. Running with --debug True 
-is recommended for the first run to find any such bad input files. Because the 
-core function involves a nested for loop, time complexity is quadratic. Script 
-has been tested on 1000 files with a runtime of roughly 1.3 minutes and 28,000 
-files with a runtime of roughly 38.5 minutes.
+is recommended for the first run to find any such bad input files. 
 
 At a broad level, the success of the output can be interpreted as a trade-off
 between false positives and false negatives. False positives occur when a true 
@@ -39,12 +36,8 @@ at each tolerance level are provided below:
 
 import glob # Allows batch input file fetching
 import os   # Allows convenient file handling
-import re # Used to parse input file
-import string # Contains list of English punctuation
 import time # Calculates script runtime
-
-# Remembers order in which names are matched in a text
-from collections import OrderedDict 
+import name_utils # Collection of helper functions in the utils file
 
 # Allows parsing of user-specified options at script call
 from optparse import OptionParser 
@@ -68,28 +61,21 @@ OPTIONS, _ = PARSER.parse_args() # Convert options into usable strings
 INPUT_DIR = OPTIONS.input_directory # Directory containing input files (required)
 DEBUG = OPTIONS.debug # Help user track sources of error (optional)
 VERBOSE = OPTIONS.verbose # Display console output (optional)
-TOLERANCE = OPTIONS.tolerance # Level of homographs to filter
+
+# Level of homographs to filter
+# Force setting to 4 if invalid option is passed
+TOLERANCE = '4' if int(OPTIONS.tolerance) not in {1,2,3,4} else OPTIONS.tolerance 
 
 # Ensure input directory exists, otherwise the script exits
 assert os.path.isdir(INPUT_DIR), \
         "The input directory doesn't exist in the working directory"
 
+# Default name for output directory, change if needed
+OUTPUT_DIR = './renamed_output'
 # Check if output directory exists, otherwise create one
-OUTPUT_DIR = './output'  # Default name for output directory, change if needed
 if not os.path.isdir(OUTPUT_DIR):
-    os.mkdir(OUTPUT_DIR)   
+    os.mkdir(OUTPUT_DIR)
     
-# Necessary for converting True and False option strings into booleans
-# that Python requires for use inside Main Function
-def _str_to_bool(option):
-
-    # Should not be used outside scope of Main Function
-    if option == 'True':
-        return True
-    elif option == 'False':
-        return False
-    else:
-        raise ValueError("Options can only be True or False")
 
 ##### Main Function #####
 def name_replacer(input_dir, debug='False', verbose='True', tolerance='3'):
@@ -112,23 +98,14 @@ def name_replacer(input_dir, debug='False', verbose='True', tolerance='3'):
     start_time = time.time() # Start runtime
     
     # Set debug and verbose flags for use throughout
-    debug = _str_to_bool(debug)
-    verbose = _str_to_bool(verbose)
+    debug = name_utils._str_to_bool(debug)
+    verbose = name_utils._str_to_bool(verbose)
     
     # Initialize generator that fetches input files one by one
     input_fetcher = glob.iglob('{}/*.txt'.format(input_dir))
     
-    # Prepare list of homographic names that could cause matching issues
-    with open('homographs/{}.txt'.format(tolerance), 'r') as homograph_handle:
-        homograph_names = homograph_handle.read().split()
-    
-    # Prepare unfiltered list of 5163 English names
-    with open('english_names.txt', 'r') as names_handle:
-        en_names = names_handle.read().split()
-    # Filter out names that are homographs
-    en_names = [name for name in en_names if name not in homograph_names]
-    # Extend list to include capitalized form of each name
-    en_names = en_names + [name.capitalize() for name in en_names]
+    # Fetch list of english names
+    en_names = name_utils._fetch_names(tolerance)
     
     # Script begins
     if verbose:
@@ -147,26 +124,19 @@ def name_replacer(input_dir, debug='False', verbose='True', tolerance='3'):
         except StopIteration:
             break # Execute when there are no more files to fetch
         
-        # Create a path for the output file in the output directory.
+        # Create a path for the output file in the output directory
         # Flag each output file with '--RENAMED', indicating that all
-            # person names in the passages have been anonymized.
-        current_output = 'output/{}--RENAMED.txt'.format(
-            os.path.split(current_input)[1][:-4])
+            # person names in the passages have been anonymized
+        current_output = '{}--RENAMED.txt'.format(os.path.join(OUTPUT_DIR,
+            os.path.split(current_input)[1][:-4]))
      
-        # Increment prior to actual processing
-        attempted_files += 1
-
-        # Read in input file into a string. 
-            # No parsing of punctuation or new line characters is involved.
-        with open(current_input, 'r') as input_handle:
-            passage = input_handle.read()
-            
-        # Split passage into alphanumeric, whitespace, and punctuation tokens
-        split_passage = re.findall(r'\w+|\s|[{}]'.format(
-                string.punctuation), passage)
+        attempted_files += 1 # Increment prior to processing
         
+        # 
+        split_passage = name_utils._read_input(current_input)
+ 
         # Check input to ensure that each file contains content before sending 
-            # to parser. Skip and log files that don't meet this criteria.
+            # to parser. Skip and log files that don't meet this criteria
         if not split_passage:
             # Display bad input file
             if verbose:
@@ -177,57 +147,35 @@ def name_replacer(input_dir, debug='False', verbose='True', tolerance='3'):
                     bad_input_files.append(current_input)
             continue
 
-        ## Core Function ##
-        
-        matched_names = OrderedDict() # Maintain order of matched names
-        for token in split_passage: # Pull next token from the passage
-            if token in en_names: # Token is an English name
-                matched_names[token] = 1 # Add it to matched_names
-                
-        matched_names = list(matched_names) # Make matched_names indexable
-        # The outer index i represents order in which names were matched.
-            # Outer index is used for renaming persons to 'proper_name_i'.
-        for i, name in enumerate(matched_names):
-            # Matching tokens by inner index j allows exact matching only.
-                # E.g. "Bea" will only match "Bea" but not "Beatles".
-            for j, token in enumerate(split_passage):
-                if name == token: # Match is found at inner index
-            # Replace name at inner index with 'proper_name_i' at outer index
-                    split_passage[j] = "proper_name_{}".format(i) 
-                    
-        # Rebuild passage from new tokens
-        new_passage = ''.join(split_passage)
-                    
-        ##    ##    ##    ##
+        rebuilt_passage = name_utils.replace_names(split_passage, en_names)
         
         # Write new passage to file in output directory at the path
             # specified in current_output variable
         with open(current_output, 'w') as file_handle:
-            file_handle.write(new_passage)
+            file_handle.write(rebuilt_passage)
         # Display where current output file is located on the local file system
         if verbose:
-            print "*".rjust(5), "\t", current_input, ">>>", current_output
+            print("*".rjust(5), "\t", current_input, ">>>", current_output)
         
         # Increment upon successful processing of current input file
         completed_files += 1
     
     # Main loop ends
     end_time = time.time() # Runtime ends
-    duration = end_time - start_time # Runtime calculated
     # Output Report
     if verbose:
         print("\n--------------------------------------------\n"
-              "Conversion complete\n"
-              "{0} of {1} files converted in {2} minutes\n"
-              "--------------------------------------------\n".format(
-                  completed_files, attempted_files, round(duration / 60, 3)))
+              "Conversion complete using tolerance level {0}\n"
+              "{1} of {2} files converted in {3} seconds\n"
+              "--------------------------------------------\n".format(TOLERANCE,
+                  completed_files, attempted_files, round((end_time - start_time), 2)))
     
         # Output any bad input files to the console
             # Only works when debug=True
         if bad_input_files:
-            print "These files had no content:"
+            print("These files had no content:")
             for item in bad_input_files:
-                print "*".rjust(5), "\t", item
+                print("*".rjust(5), "\t", item)
      
     # Exit
     return 

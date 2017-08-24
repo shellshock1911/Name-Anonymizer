@@ -1,32 +1,45 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+"""Set of helper functions for name_replacer.py"""
+
+# Allow compatibility between Python 2.7 and 3.5
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+from io import open
+#####
 
 import re # Used to parse input file
 import string # Contains list of English punctuation
 
+
 # Remembers order in which names are matched in a text
 from collections import OrderedDict 
 
-def _str_to_bool(option):
+def str_to_bool(option):
+    
     """Converts True and False option strings to booleans."""
     
-    if option == 'True':
-        return True
-    elif option == 'False':
-        return False
-    else:
+    if option == 'True': # String
+        return True # Boolean
+    elif option == 'False': # String
+        return False # Boolean
+    else: # Cannot proceed if values other than True or False are passed
         raise ValueError("Options can only be True or False")
         
-def _fetch_names(tolerance):
+def fetch_names(tolerance):
+    
     """Fetches set of lowercase English names, filters out homographs, and 
     adds capitalized version of each one."""
 
     # Prepare set of homographic names that could cause matching issues
-    with open('homographs/{}.txt'.format(tolerance), 'r') as homograph_handle:
+    with open('homographs/{}.txt'.format(tolerance), 'r', encoding='utf-8') as homograph_handle:
         homograph_names = set(homograph_handle.read().split())
         
     # Prepare unfiltered set of 5,163 English names
-    with open('english_names.txt', 'r') as names_handle:
+    with open('english_names.txt', 'r', encoding='utf-8') as names_handle:
         en_names = set(names_handle.read().split())
         
     # Filter out names that are homographs, leaving 4,577 names
@@ -36,20 +49,22 @@ def _fetch_names(tolerance):
 
     return en_names
 
-def _read_input(input_file):
+def read_input(input_file):
+    
     """Reads input file and prepares text for name replacing."""
     
     # Read in input file into a string 
-    with open(input_file, 'r') as input_handle:
+    with open(input_file, 'r', encoding='utf-8') as input_handle:
         passage = input_handle.read()
             
-    # Split passage into alphanumeric, whitespace, and punctuation tokens
+    # Split passage into words, whitespace, and punctuation tokens
     split_passage = re.findall(r'\w+|\s|[{}]'.format(
         string.punctuation), passage)
 
     return split_passage
   
 def replace_names(tokens, name_list):
+    
     """Replaces names in text with anonymous tags."""
     
     matched_names = OrderedDict() # Maintain order of matched names
@@ -73,3 +88,4 @@ def replace_names(tokens, name_list):
     rebuilt_passage = ''.join(tokens)
 
     return rebuilt_passage
+    

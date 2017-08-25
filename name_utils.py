@@ -35,7 +35,8 @@ def fetch_names(tolerance):
     adds capitalized version of each one."""
 
     # Prepare set of homographic names that could cause matching issues
-    with open('homographs/{}.txt'.format(tolerance), 'r', encoding='utf-8') as homograph_handle:
+    with open('homographs/{}.txt'.format(
+            tolerance), 'r', encoding='utf-8') as homograph_handle:
         homograph_names = set(homograph_handle.read().split())
         
     # Prepare unfiltered set of 5,163 English names
@@ -43,9 +44,9 @@ def fetch_names(tolerance):
         en_names = set(names_handle.read().split())
         
     # Filter out names that are homographs, leaving 4,577 names
-    en_names = {name for name in en_names if name not in homograph_names}
+    en_names -= homograph_names
     # Extend set to include capitalized form of each name
-    en_names = en_names | {name.capitalize() for name in en_names}
+    en_names |= {name.capitalize() for name in en_names}
 
     return en_names
 

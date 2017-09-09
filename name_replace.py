@@ -16,7 +16,7 @@ run the following at the Terminal prompt for Python 2.7:
        
     $ python3 name_replace.py --input test_batch_input --debug True
 
-Capitalized, lower case, and possessive forms of names are all found and replaced,
+Capitalized, lowercase, and possessive forms of names are all found and replaced,
 provided they exist in English names file. Using the debug flag, empty input and 
 failed conversions are able to be tracked and reported. Running with --debug True 
 is recommended for the first run to find any such bad input files. 

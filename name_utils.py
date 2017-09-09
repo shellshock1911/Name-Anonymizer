@@ -14,7 +14,6 @@ from io import open
 import re # Used to parse input file
 import string # Contains list of English punctuation
 
-
 # Remembers order in which names are matched in a text
 from collections import OrderedDict 
 
@@ -82,7 +81,7 @@ def replace_names(tokens, name_list):
             # E.g. "Bea" will only match "Bea" but not "Beatles".
         for j, token in enumerate(tokens):
             if name == token: # Match is found at inner index
-                # Replace name at inner index with 'proper_name_i' at outer index
+            # Replace name at inner index with 'proper_name_i' at outer index
                 tokens[j] = "proper_name_{}".format(i)  
                 
     # Rebuild passage from new tokens

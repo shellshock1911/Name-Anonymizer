@@ -1,3 +1,4 @@
 __pycache__
 renamed_output
 .DS_Store
+*.pyc

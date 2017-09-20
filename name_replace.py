@@ -10,7 +10,7 @@ files in an input directory sequentially. The files in the input directory shoul
 each contain one text that has person names that need replacing. To get started,
 run the following at the Terminal prompt for Python 2.7:
     
-    $ python name_replace.py --input test_batch_input --debug True
+    $ python2 name_replace.py --input test_batch_input --debug True
     
        or (for Python 3.x)
        

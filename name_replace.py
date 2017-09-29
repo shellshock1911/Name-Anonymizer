@@ -65,7 +65,7 @@ import name_utils
 PARSER = OptionParser()
 
 PARSER.add_option('-i', '--input', dest='input_directory',
-                  help='input directory with files that need to be converted')
+                  help='input directory with files that need name replacing')
 PARSER.add_option('-d', '--debug', dest='debug', default="False",
                   help='find and display files that fail conversion')
 PARSER.add_option('-v', '--verbose', dest='verbose', default="True",

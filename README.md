@@ -17,7 +17,10 @@ or (for Python 3.x)
 
 -------------------------------
 
-Capitalized, lowercase, and possessive forms of names are all found and replaced, provided they exist in English names file. Using the debug flag, empty input and failed conversions are able to be tracked and reported. Running with --debug True is recommended for the first run to find any such bad input files. 
+Capitalized, lowercase, and possessive forms of names are all found and replaced, 
+provided they exist in English names file. Using the debug flag, empty input and 
+failed conversions are able to be tracked and reported. Running with --debug True 
+is recommended for the first run to find any such bad input files. 
 
 -------------------------------
 
@@ -27,7 +30,8 @@ word is incorrectly replaced, e.g. South America becomes South proper_name_0.
 False negatives occur when a true name fails to be replaced, e.g. Charlotte 
 remains Charlotte instead of receiving a proper_name tag. False negatives
 generally appear more desirable than false positives, however the desired 
-balance of each depends on specific usage contexts. In order to tune the balance,  four homographic name files have been included that create this functionality.
+balance of each depends on specific usage contexts. In order to tune the balance,  
+four homographic name files have been included that create this functionality.
 
 Setting the --tolerance level to 1 will favor false negatives while setting it 
 to 4 will favor false positives. The default level is 3. For a more transparent
